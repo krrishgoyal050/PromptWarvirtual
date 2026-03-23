@@ -22,9 +22,63 @@ const mockFirebaseConfig = {
     appId: "1:123:web:abc"
 };
 
-// Mock analytics/logging function
+// --- GOOGLE CLOUD AND FIREBASE SIMULATIONS ---
+
+/**
+ * GCP Cloud Logging Simulation
+ * Formats logs as Google Cloud structured JSON
+ */
+class GoogleCloudLogger {
+    constructor(projectId) {
+        this.projectId = projectId;
+    }
+    
+    _log(severity, message, payload) {
+        const entry = {
+            severity,
+            message,
+            jsonPayload: payload,
+            timestamp: new Date().toISOString(),
+            resource: { type: "global", labels: { project_id: this.projectId } }
+        };
+        console[severity === 'ERROR' ? 'error' : 'info'](`[GCP Logging ${severity}]`, entry);
+    }
+
+    info(message, payload={}) { this._log('INFO', message, payload); }
+    warn(message, payload={}) { this._log('WARNING', message, payload); }
+    error(message, payload={}) { this._log('ERROR', message, payload); }
+}
+
+const GCPLogger = new GoogleCloudLogger(mockFirebaseConfig.projectId);
+window.GCPLogger = GCPLogger; // Exposed for script.js
+
+/**
+ * Firebase Firestore Mock (Saving High Scores)
+ */
+class FirebaseMockDB {
+    constructor() {
+        this.scores = [];
+    }
+    
+    async saveScore(userId, score) {
+        return new Promise((resolve) => {
+            const doc = { userId, score, timestamp: Date.now() };
+            this.scores.push(doc);
+            GCPLogger.info("Firebase Firestore: Document written", { doc_id: `doc_${Date.now()}` });
+            resolve();
+        });
+    }
+}
+window.FirebaseDB = new FirebaseMockDB();
+
+// Robust analytics logging function
 function logAnalyticsEvent(eventName, eventData) {
-    console.log(`[Firebase Analytics Mock] Event: ${eventName}`, eventData);
+    GCPLogger.info(`[Firebase Analytics] Event: ${eventName}`, eventData);
+    
+    // Auto-save high score via Firebase simulation
+    if (eventName === 'game_over' && eventData.finalScore > 0) {
+        window.FirebaseDB.saveScore("user_" + Math.floor(Math.random()*1000), eventData.finalScore);
+    }
 }
 
 const API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent";

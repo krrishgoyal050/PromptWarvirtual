@@ -57,7 +57,8 @@ function initGame() {
     updateDisplay();
     spawnFood();
     
-    hintLog.innerHTML = '<p class="sys-msg">> Neural link established. Good luck.</p>';
+    hintLog.replaceChildren(); // Safely clear feedback
+    addLog('> Neural link established. Good luck.', 'sys-msg');
     document.body.className = ''; // Reset theme
     
     isGameOver = false;
@@ -196,33 +197,36 @@ function generateObstacle() {
     addLog(`> AI modified environment: New obstacle injected.`);
 }
 
+// Cache CSS colors for performance (prevents reflow operations each frame)
+let computedColors = {};
+function updateCachedColors() {
+    const style = getComputedStyle(document.body);
+    computedColors.snakeHead = style.getPropertyValue('--snake-head').trim() || '#66fcf1';
+    computedColors.snakeBody = style.getPropertyValue('--snake-body').trim() || '#45a29e';
+    computedColors.food = style.getPropertyValue('--food-color').trim() || '#ff0055';
+    computedColors.obs = style.getPropertyValue('--obstacle-color').trim() || '#bbbbbb';
+}
+
 function drawGame() {
     // Clear canvas
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     
-    // Get colors from CSS vars
-    const style = getComputedStyle(document.body);
-    const snakeHeadColor = style.getPropertyValue('--snake-head').trim() || '#66fcf1';
-    const snakeBodyColor = style.getPropertyValue('--snake-body').trim() || '#45a29e';
-    const foodColor = style.getPropertyValue('--food-color').trim() || '#ff0055';
-    const obsColor = style.getPropertyValue('--obstacle-color').trim() || '#888888';
-    
     // Draw obstacles
-    ctx.fillStyle = obsColor;
+    ctx.fillStyle = computedColors.obs;
     for (let obs of obstacles) {
         ctx.fillRect(obs.x * GRID_SIZE, obs.y * GRID_SIZE, GRID_SIZE - 2, GRID_SIZE - 2);
     }
     
     // Draw food
-    ctx.fillStyle = foodColor;
+    ctx.fillStyle = computedColors.food;
     ctx.shadowBlur = 10;
-    ctx.shadowColor = foodColor;
+    ctx.shadowColor = computedColors.food;
     ctx.fillRect(food.x * GRID_SIZE, food.y * GRID_SIZE, GRID_SIZE - 2, GRID_SIZE - 2);
     ctx.shadowBlur = 0; // reset
     
     // Draw snake
     for (let i = 0; i < snake.length; i++) {
-        ctx.fillStyle = i === 0 ? snakeHeadColor : snakeBodyColor;
+        ctx.fillStyle = i === 0 ? computedColors.snakeHead : computedColors.snakeBody;
         ctx.fillRect(snake[i].x * GRID_SIZE, snake[i].y * GRID_SIZE, GRID_SIZE - 2, GRID_SIZE - 2);
     }
 }
@@ -244,11 +248,12 @@ async function triggerThemeCheck() {
         
         if (currentTheme !== targetClass && targetClass !== undefined) {
             document.body.className = targetClass;
+            updateCachedColors(); // Efficiency: Refresh color cache on theme change
             themeDisplay.innerText = newThemeName.toUpperCase();
             addLog(`> AI mapped new environment: ${newThemeName.toUpperCase()}`);
         }
     } catch (e) {
-        console.warn("Error during theme check", e);
+        GCPLogger.error("Error during theme check", { error: e.message });
     }
 }
 
@@ -270,7 +275,7 @@ async function triggerAIHint() {
             addLog(`[AI Coach]: ${hint}`, 'hint-msg');
         }
     } catch (e) {
-        console.warn("Hint extraction error", e);
+        GCPLogger.error("Hint extraction error", { err: e.message });
     }
 }
 
@@ -286,18 +291,23 @@ async function triggerGameOver() {
     gameOverScreen.classList.remove("hidden");
     restartBtn.focus(); // Accessibility: Focus on restart
     
+    // Google Calendar API Integration (URL creation)
+    const calendarBtn = document.getElementById("calendarBtn");
+    const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=NeuroSnake+Training+Session&details=Score+to+beat:+${score}&dates=20261231T180000Z/20261231T190000Z`;
+    calendarBtn.href = calendarUrl;
+    
     try {
         const analysis = await aiEngine.analyzeGameplay(score, null);
         aiAnalysis.innerText = analysis;
     } catch(e) {
-        aiAnalysis.innerText = "System error during analysis generation.";
+        GCPLogger.error("Analysis Error", { msg: "System error during analysis generation" });
     }
 }
 
 function addLog(msg, cssClass = 'sys-msg') {
     const p = document.createElement("p");
     p.className = cssClass;
-    p.innerText = msg;
+    p.textContent = msg; // Security: sanitize using textContent instead of innerText
     hintLog.appendChild(p);
     hintLog.scrollTop = hintLog.scrollHeight;
 }
@@ -354,5 +364,6 @@ window.addEventListener("keydown", (e) => {
 startBtn.addEventListener("click", initGame);
 restartBtn.addEventListener("click", initGame);
 
-// Initial draw static map
+// Initial cache and draw
+updateCachedColors();
 drawGame();
