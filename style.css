@@ -2,12 +2,12 @@
     --bg-color: #0b0c10;
     --panel-bg: rgba(31, 40, 51, 0.8);
     --border-color: #45a29e;
-    --text-primary: #c5c6c7;
+    --text-primary: #ffffff;
     --text-accent: #66fcf1;
     --snake-head: #66fcf1;
     --snake-body: #45a29e;
     --food-color: #ff0055;
-    --obstacle-color: #888888;
+    --obstacle-color: #bbbbbb;
     --font-heading: 'Orbitron', sans-serif;
     --font-body: 'Roboto', sans-serif;
     --border-radius: 8px;
@@ -98,6 +98,10 @@ main {
     overflow: hidden;
 }
 
+canvas:focus {
+    outline: 2px solid var(--food-color);
+}
+
 canvas {
     display: block;
 }
@@ -156,10 +160,16 @@ button {
     text-transform: uppercase;
 }
 
-button:hover {
+button:hover, button:focus {
     background: var(--text-accent);
     color: var(--bg-color);
     box-shadow: 0 0 15px var(--text-accent);
+    outline: none;
+}
+
+button:focus-visible {
+    outline: 3px solid var(--food-color);
+    outline-offset: 3px;
 }
 
 .dashboard {
@@ -212,7 +222,7 @@ h3 {
 }
 
 #geminiApiKey:focus, select:focus {
-    outline: none;
+    outline: 2px solid var(--food-color);
     border-color: var(--text-accent);
     box-shadow: 0 0 5px rgba(102, 252, 241, 0.5);
 }

@@ -39,6 +39,9 @@ const hintLog = document.getElementById("hintLog");
 const startBtn = document.getElementById("startBtn");
 const restartBtn = document.getElementById("restartBtn");
 
+/**
+ * Initializes the game state, resetting the score, snake, and AI metrics.
+ */
 function initGame() {
     snake = [
         { x: 10, y: 10 },
@@ -72,6 +75,10 @@ function initGame() {
     gameLoop();
 }
 
+/**
+ * Main game loop: controls the logic update tick safely.
+ * Called recursively via setTimeout.
+ */
 function gameLoop() {
     if (isGameOver) return;
     
@@ -98,6 +105,9 @@ function gameLoop() {
     }
 }
 
+/**
+ * Calculates the next head position vector and updates the snake array.
+ */
 function moveSnake() {
     const head = { x: snake[0].x + velocity.x, y: snake[0].y + velocity.y };
     
@@ -105,6 +115,10 @@ function moveSnake() {
     snake.pop(); // Remove tail
 }
 
+/**
+ * Determines if the snake has hit a wall, an obstacle, or itself.
+ * Triggers game over logic on lethal collisions.
+ */
 function checkCollisions() {
     const head = snake[0];
     
@@ -219,18 +233,28 @@ function updateDisplay() {
     speedDisplay.innerText = speedMult + "x";
 }
 
+/**
+ * Asks the AI Engine to provide a visual theme based on score/metrics.
+ */
 async function triggerThemeCheck() {
-    const newThemeName = await aiEngine.getDynamicTheme(score);
-    const currentTheme = document.body.className;
-    const targetClass = newThemeName === "cyberpunk" ? "" : `theme-${newThemeName}`;
-    
-    if (currentTheme !== targetClass && targetClass !== undefined) {
-        document.body.className = targetClass;
-        themeDisplay.innerText = newThemeName.toUpperCase();
-        addLog(`> AI mapped new environment: ${newThemeName.toUpperCase()}`);
+    try {
+        const newThemeName = await aiEngine.adjustDifficulty({ score: score });
+        const currentTheme = document.body.className;
+        const targetClass = newThemeName === "cyberpunk" ? "" : `theme-${newThemeName}`;
+        
+        if (currentTheme !== targetClass && targetClass !== undefined) {
+            document.body.className = targetClass;
+            themeDisplay.innerText = newThemeName.toUpperCase();
+            addLog(`> AI mapped new environment: ${newThemeName.toUpperCase()}`);
+        }
+    } catch (e) {
+        console.warn("Error during theme check", e);
     }
 }
 
+/**
+ * Triggers an AI coaching hint asynchronously to avoid blocking the main thread.
+ */
 async function triggerAIHint() {
     if (isGameOver || !gameStarted) return;
     
@@ -240,12 +264,19 @@ async function triggerAIHint() {
         speed: (baseSpeedMs / currentSpeedMs)
     };
     
-    const hint = await aiEngine.getCoachingHint(gameState);
-    if(hint) {
-        addLog(`[AI Coach]: ${hint}`, 'hint-msg');
+    try {
+        const hint = await aiEngine.generateHint(gameState);
+        if(hint) {
+            addLog(`[AI Coach]: ${hint}`, 'hint-msg');
+        }
+    } catch (e) {
+        console.warn("Hint extraction error", e);
     }
 }
 
+/**
+ * Handles end of game state and asynchronous post-game AI analysis.
+ */
 async function triggerGameOver() {
     isGameOver = true;
     clearInterval(aiHintInterval);
@@ -253,9 +284,10 @@ async function triggerGameOver() {
     finalScore.innerText = score;
     aiAnalysis.innerText = "Analyzing neural performance...";
     gameOverScreen.classList.remove("hidden");
+    restartBtn.focus(); // Accessibility: Focus on restart
     
     try {
-        const analysis = await aiEngine.getPostGameAnalysis(score, null);
+        const analysis = await aiEngine.analyzeGameplay(score, null);
         aiAnalysis.innerText = analysis;
     } catch(e) {
         aiAnalysis.innerText = "System error during analysis generation.";
@@ -272,7 +304,17 @@ function addLog(msg, cssClass = 'sys-msg') {
 
 // Controls
 window.addEventListener("keydown", (e) => {
-    if (isGameOver) return;
+    // Prevent overriding keyboard behavior strictly for specific keys
+    if (document.activeElement.tagName === "INPUT" || document.activeElement.tagName === "SELECT") {
+        return;
+    }
+
+    if (isGameOver) {
+        if (e.key === "Enter" || e.key === "r" || e.key === "R" || e.key === " ") {
+            initGame();
+        }
+        return;
+    }
     
     // Prevent reverse gear
     const { x, y } = velocity;

@@ -16,47 +16,47 @@
 
         <main>
             <div class="game-area">
-                <canvas id="gameCanvas" width="400" height="400"></canvas>
+                <canvas id="gameCanvas" width="400" height="400" aria-label="Snake Game Board" role="img" tabindex="0"></canvas>
                 <div id="gameOverScreen" class="overlay hidden">
                     <h2>SYSTEM FAILURE</h2>
-                    <p>Score: <span id="finalScore">0</span></p>
-                    <div id="aiAnalysis" class="ai-analysis-text">Analyzing your performance...</div>
-                    <button id="restartBtn">REBOOT SYSTEM</button>
+                    <p>Score: <span id="finalScore" aria-live="polite">0</span></p>
+                    <div id="aiAnalysis" class="ai-analysis-text" aria-live="polite">Analyzing your performance...</div>
+                    <button id="restartBtn" aria-label="Restart the game">REBOOT SYSTEM</button>
                 </div>
                 <div id="startScreen" class="overlay">
                     <h2>INITIATING SEQUENCE</h2>
-                    <button id="startBtn">BEGIN</button>
+                    <button id="startBtn" aria-label="Start the game">BEGIN</button>
                 </div>
             </div>
 
-            <aside class="dashboard">
+            <aside class="dashboard" aria-label="Game Dashboard">
                 <div class="panel score-panel">
                     <h3>STATS</h3>
-                    <div class="stat"><span class="label">SCORE:</span> <span id="scoreDisplay">0</span></div>
-                    <div class="stat"><span class="label">SPEED:</span> <span id="speedDisplay">1.0x</span></div>
-                    <div class="stat"><span class="label">THEME:</span> <span id="themeDisplay">CYBERPUNK</span></div>
+                    <div class="stat"><span class="label">SCORE:</span> <span id="scoreDisplay" aria-live="polite">0</span></div>
+                    <div class="stat"><span class="label">SPEED:</span> <span id="speedDisplay" aria-live="polite">1.0x</span></div>
+                    <div class="stat"><span class="label">THEME:</span> <span id="themeDisplay" aria-live="polite">CYBERPUNK</span></div>
                 </div>
 
-                <div class="panel ai-settings">
+                <div class="panel ai-settings" aria-label="AI Settings">
                     <h3>AI ORACLE SETTINGS</h3>
-                    <input type="password" id="geminiApiKey" placeholder="Gemini API Key (Optional)" title="If left blank, uses a mock AI engine." />
+                    <input type="password" id="geminiApiKey" aria-label="Gemini API Key" placeholder="Gemini API Key (Optional)" title="If left blank, uses a mock AI engine." />
                     
                     <label for="aiPersonality">AI Personality:</label>
-                    <select id="aiPersonality">
+                    <select id="aiPersonality" aria-label="AI Personality">
                         <option value="analytical">Analytical (Professional)</option>
                         <option value="competitive">Competitive (Aggressive)</option>
                         <option value="sarcastic">Sarcastic (Humorous)</option>
                     </select>
 
                     <label class="toggle-container">
-                        <input type="checkbox" id="aiCoachToggle" checked>
+                        <input type="checkbox" id="aiCoachToggle" aria-label="Enable Real-Time Coaching" checked>
                         <span class="checkmark">Enable Real-Time Coaching</span>
                     </label>
                 </div>
 
                 <div class="panel ai-feed">
                     <h3>LIVE AI FEEDBACK</h3>
-                    <div id="hintLog" class="feed-content">
+                    <div id="hintLog" class="feed-content" aria-live="assertive" role="log">
                         <p class="sys-msg">> System initialized. Waiting for input...</p>
                     </div>
                 </div>
@@ -66,5 +66,6 @@
 
     <script src="gemini.js"></script>
     <script src="script.js"></script>
+    <script src="test.js"></script>
 </body>
 </html>
